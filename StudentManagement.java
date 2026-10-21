@@ -3,102 +3,131 @@ import java.util.List;
 import java.util.Scanner;
 
 public class StudentManagement {
-    static List<String> names = new ArrayList<>();
-    static List<Integer> marks = new ArrayList<>();
+    private static final int PASS_MARKS = 50;
+    private static final int MIN_MARKS = 0;
+    private static final int MAX_MARKS = 100;
+
+    private static final List<String> names = new ArrayList<>();
+    private static final List<Integer> marks = new ArrayList<>();
 
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int unusedCounter = 0; // Intentional issue: unused variable
-
-        while (true) {
-            System.out.println("\n1. Add student");
-            System.out.println("2. Show all students");
-            System.out.println("3. Average marks");
-            System.out.println("4. Highest marks");
-            System.out.println("5. Search student");
-            System.out.println("0. Exit");
-            System.out.print("Choose: ");
-
-            int x;
-            try {
-                x = Integer.parseInt(sc.nextLine());
-            } catch (NumberFormatException e) {
-                // Intentional issue: exception is swallowed
-                continue;
-            }
-
-            if (x == 1) {
-                System.out.print("Student name: ");
-                String a = sc.nextLine(); // Intentional issue: poor variable name
-                System.out.print("Marks (0-100): ");
-                int b;
-                try {
-                    b = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    continue;
-                }
-                names.add(a);
-                marks.add(b);
-                System.out.println("Student added.");
-            } else if (x == 2) {
-                displayAll();
-            } else if (x == 3) {
-                int total = 0;
-                for (int i = 0; i < marks.size(); i++) {
-                    total = total + marks.get(i);
-                }
-                if (marks.size() > 0) {
-                    System.out.println("Average: " + (total / marks.size()));
-                } else {
-                    System.out.println("No marks available.");
-                }
-            } else if (x == 4) {
-                int highest = -1;
-                for (int i = 0; i < marks.size(); i++) {
-                    if (marks.get(i) > highest) {
-                        highest = marks.get(i);
+        try (Scanner scanner = new Scanner(System.in)) {
+            boolean running = true;
+            while (running) {
+                printMenu();
+                int choice = readInteger(scanner, "Choose: ");
+                switch (choice) {
+                    case 1 -> addStudent(scanner);
+                    case 2 -> displayAll();
+                    case 3 -> showAverage();
+                    case 4 -> showHighest();
+                    case 5 -> searchStudent(scanner);
+                    case 0 -> {
+                        System.out.println("Goodbye.");
+                        running = false;
                     }
+                    default -> System.out.println("Invalid choice. Please try again.");
                 }
-                if (highest >= 0) {
-                    System.out.println("Highest marks: " + highest);
-                } else {
-                    System.out.println("No marks available.");
-                }
-            } else if (x == 5) {
-                System.out.print("Enter student name to search: ");
-                String searchName = sc.nextLine();
-                boolean found = false;
-                for (int i = 0; i < names.size(); i++) {
-                    if (names.get(i).equalsIgnoreCase(searchName)) {
-                        // Intentional issue: duplicated student-display statements
-                        System.out.println("Student name: " + names.get(i));
-                        System.out.println("Student marks: " + marks.get(i));
-                        System.out.println("Result: " + (marks.get(i) >= 50 ? "Pass" : "Fail"));
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    System.out.println("Student not found.");
-                }
-            } else if (x == 0) {
-                System.out.println("Goodbye.");
-                sc.close();
-                return;
-            } else {
-                System.out.println("Invalid choice.");
             }
         }
     }
 
-    static void displayAll() {
-        if (names.size() == 0) {
+    private static void printMenu() {
+        System.out.println("\n1. Add student");
+        System.out.println("2. Show all students");
+        System.out.println("3. Average marks");
+        System.out.println("4. Highest marks");
+        System.out.println("5. Search student");
+        System.out.println("0. Exit");
+    }
+
+    private static int readInteger(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                return Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException exception) {
+                System.out.println("Please enter a valid whole number.");
+            }
+        }
+    }
+
+    private static void addStudent(Scanner scanner) {
+        System.out.print("Student name: ");
+        String studentName = scanner.nextLine().trim();
+        if (studentName.isEmpty()) {
+            System.out.println("Name cannot be empty.");
+            return;
+        }
+
+        int studentMarks = readInteger(scanner, "Marks (0-100): ");
+        if (studentMarks < MIN_MARKS || studentMarks > MAX_MARKS) {
+            System.out.println("Marks must be between 0 and 100.");
+            return;
+        }
+
+        names.add(studentName);
+        marks.add(studentMarks);
+        System.out.println("Student added.");
+    }
+
+    private static void displayAll() {
+        if (names.isEmpty()) {
             System.out.println("No students available.");
+            return;
         }
-        for (int i = 0; i < names.size(); i++) {
-            // Intentional issue: repeated display logic and hard-coded pass mark
-            System.out.println("Student name: " + names.get(i));
-            System.out.println("Student marks: " + marks.get(i));
-            System.out.println("Result: " + (marks.get(i) >= 50 ? "Pass" : "Fail"));
+
+        for (int index = 0; index < names.size(); index++) {
+            displayStudent(index);
         }
+    }
+
+    private static void displayStudent(int index) {
+        System.out.println("Student name: " + names.get(index));
+        System.out.println("Student marks: " + marks.get(index));
+        String result = marks.get(index) >= PASS_MARKS ? "Pass" : "Fail";
+        System.out.println("Result: " + result);
+    }
+
+    private static void showAverage() {
+        if (marks.isEmpty()) {
+            System.out.println("No marks available.");
+            return;
+        }
+
+        int total = 0;
+        for (int mark : marks) {
+            total += mark;
+        }
+        double average = (double) total / marks.size();
+        System.out.printf("Average: %.2f%n", average);
+    }
+
+    private static void showHighest() {
+        if (marks.isEmpty()) {
+            System.out.println("No marks available.");
+            return;
+        }
+
+        int highest = marks.get(0);
+        for (int mark : marks) {
+            if (mark > highest) {
+                highest = mark;
+            }
+        }
+        System.out.println("Highest marks: " + highest);
+    }
+
+    private static void searchStudent(Scanner scanner) {
+        System.out.print("Enter student name to search: ");
+        String searchName = scanner.nextLine().trim();
+
+        for (int index = 0; index < names.size(); index++) {
+            if (names.get(index).equalsIgnoreCase(searchName)) {
+                displayStudent(index);
+                return;
+            }
+        }
+        System.out.println("Student not found.");
     }
 }
